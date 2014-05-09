@@ -20,8 +20,20 @@ player::player(SDL_Surface* img)
 		clips[i].w = clips[i].h = 50;
 	}
 	ground = false;
+	jump = false;
 }
 
+void player::setJump()
+{
+	if (ground && !jump)
+	{
+		jump = true;
+		ground = false;
+		yvel = -17; //velocity from jumping from ground to mid-air until reaches 0 and it increase from 0 to more until reaches the ground
+		box.y -= 5;
+	}
+	
+}
 
 player::~player(void)
 {
@@ -65,7 +77,7 @@ void player::move(const std::vector<std::vector<int> >& map)
 
 	for (int i = 0; i < map.size(); i++)
 	{
-		for (int j = 0; j < map[0].size(); j++)
+		for (int j = start; j < end; j++)
 		{
 			if(map[i][j] == 0)
 				continue;
@@ -73,18 +85,18 @@ void player::move(const std::vector<std::vector<int> >& map)
 			if (collision(&box, &destrect))
 			{
 				nc = 1;
-				if(destrect.y >= box.y + box.h)
+				if(destrect.y >= box.y + box.h - 11)
 				{
 					ground = true;
 					yvel= 0 ;
 				}
-				else if (destrect.y + destrect.h <= box.y)
+				else if (destrect.y + destrect.h <= box.y + 11)
 				{
 					box.x++;
 					yvel = 5; // this will be gravity
 				}
-				if (box.x + box.w >= destrect.x && 
-					box.y + box.h >= destrect.y && 
+				if (box.x + box.w >= destrect.x - 5 && 
+					box.y + box.h >= destrect.y + 6 && 
 					box.x + box.w <= destrect.x + 20)
 				{
 					xvel = 0;
@@ -92,18 +104,27 @@ void player::move(const std::vector<std::vector<int> >& map)
 
 				}
 				else if (box.x <= destrect.x + destrect.w &&
-						 box.y + box.h >= destrect.y)
+						 box.y + box.h >= destrect.y + 6)
 				{
 					xvel = 0;
 					box.x++;
 				}
 			}
 		}
-		if (!nc)
-		{
-			yvel=5;
-		}
 	}
+	if (!nc && !jump) // not colliding nor jumping
+	{
+		yvel=5;
+	}
+	if (jump && yvel < 5)
+	{
+		yvel++;
+	}
+	else
+	{
+		jump = false;
+	}
+	
 	box.x += xvel;
 	box.y += yvel;
 }

@@ -1,6 +1,6 @@
 #include "base.hpp"
 
-bool collision (SDL_Rect* rec1, SDL_Rect* rec2)
+bool baseclass::collision (SDL_Rect* rec1, SDL_Rect* rec2)
 {
 	if (rec1->y >= rec2->y + rec2->h)
 	{

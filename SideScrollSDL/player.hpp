@@ -11,7 +11,7 @@ class player:baseclass
 	SDL_Surface* image;
 	int xvel, yvel;
 	SDL_Rect clips[4];
-	bool ground;
+	bool ground, jump;
 public:
 	player(SDL_Surface* img);
 	~player(void);
@@ -20,5 +20,6 @@ public:
 	int getXvel();
 	void move(const std::vector<std::vector<int> >& map);
 	void show (SDL_Surface* screen);
+	void setJump();
 };
 

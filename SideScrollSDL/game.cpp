@@ -63,6 +63,12 @@ void game::handleEvents()
 				case SDLK_RIGHT:
 					direction[1]=1;
 					break;
+				case SDLK_SPACE:
+					player1->setJump();
+					break;
+				case SDLK_ESCAPE:
+					running = false;
+					return;
 			}
 			break;
 		case SDL_KEYUP:
@@ -74,6 +80,9 @@ void game::handleEvents()
 				case SDLK_RIGHT:
 					direction[1]=0;
 					break;
+				case SDLK_ESCAPE:
+					running = false;
+					return;
 			}
 			break;
 		}
@@ -169,22 +178,43 @@ void game::start()
 
 		if (direction[0])
 		{
-			camera.x--;
-			baseclass::coord.x--;
+			if(player1->getRect()->x > 0)
+			{
+				player1 -> setXvel(-1);
+			}
+			else
+			{
+				player1->setXvel(0);
+				camera.x--;
+				baseclass::coord.x--;
+			}
 			if (camera.x < 0)
 			{
 				camera.x = 2000 - SCREEN_WIDTH;
 			}
 		}
 
-		if (direction[1])
+		else if (direction[1])
 		{
-			camera.x++;
-			baseclass::coord.x++;
+			if (player1->getRect()->x < 80) // so the player cannot movrt far left on the border left
+			{
+				player1->setXvel(1);
+			}
+			else
+			{
+				player1->setXvel(0);
+				camera.x++;
+				baseclass::coord.x++;
+			}
 			if (camera.x >= 2000 - SCREEN_WIDTH)
 			{
 				camera.x = 0;
 			}
+		}
+		// if does not press any key
+		else
+		{
+			player1->setXvel(0);
 		}
 
 		player1->move(map);
