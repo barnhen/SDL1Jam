@@ -12,6 +12,9 @@ class player:baseclass
 	int xvel, yvel;
 	SDL_Rect clips[4];
 	bool ground, jump;
+	char direction;
+	double frame;
+	bool moving;
 public:
 	player(SDL_Surface* img);
 	~player(void);

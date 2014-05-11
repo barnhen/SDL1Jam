@@ -7,6 +7,7 @@ game::game()
 	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
 	block = load_image("TileSet-1.bmp");
 	background=load_image("background.bmp");
+	bul = load_image("bullet.bmp");
 	baseclass::coord.x =  baseclass::coord.y = 0;
 	baseclass::coord.w = SCREEN_WIDTH;
 	baseclass::coord.h = SCREEN_HEIGHT;
@@ -24,6 +25,11 @@ game::~game(void)
 {
 	SDL_FreeSurface(block);
 	SDL_FreeSurface(background);
+	SDL_FreeSurface(bul);
+	for (int i = 0; i < bullets.size(); i++)
+	{
+		delete bullets[i];
+	}
 	SDL_Quit();
 }
 
@@ -69,6 +75,12 @@ void game::handleEvents()
 				case SDLK_ESCAPE:
 					running = false;
 					return;
+				case SDLK_f:
+					bullets.push_back(new bullet(bul, 
+												 player1->getRect()->x + player1->getRect()->w, 
+												 player1->getRect()->y + 15, 5, 0));
+					break;
+
 			}
 			break;
 		case SDL_KEYUP:
@@ -217,11 +229,73 @@ void game::start()
 			player1->setXvel(0);
 		}
 
+				//collision detection begin
+		int str = ( baseclass::coord.x - (baseclass::coord.x % baseclass::TILE_SIZE)) / baseclass::TILE_SIZE;
+		int end = (baseclass::coord.x + baseclass::coord.w + (baseclass::TILE_SIZE - (baseclass::coord.x + baseclass::coord.w) % baseclass::TILE_SIZE)) / 50;
+	
+		if (start < 0)
+		{
+			start=0;
+		}
+		if (end > map[0].size())
+		{
+			end = map[0].size();
+		}
+		bool nc = false; // non collision
+
+		for (int i = 0; i < map.size(); i++)
+		{
+			for (int j = str; j < end; j++)
+			{
+				if(map[i][j] == 0)
+					continue;
+				SDL_Rect destrect =  { j * 50 - baseclass::coord.x,i * 50, 50, 50 };
+				for (int g = 0; g < bullets.size(); g++)
+				{
+					if (collision(bullets[g]->getRect(), &destrect))
+					{
+						delete bullets[g];
+						bullets.erase(bullets.begin() + g);
+					}
+
+				}
+			}
+		}
+
+
+
+		//collision detection end
+
+
+		for (int i = 0; i < bullets.size(); i++)
+		{
+			if (bullets[i]->getRect()->x >=  screen->w ||
+				bullets[i]->getRect()->x + bullets[i]->getRect()->w <= 0)
+			{
+				delete bullets[i];
+				bullets.erase(bullets.begin() + i);
+			}
+		}
+
+
+					
+
+
+		
+
 		player1->move(map);
+		for (int i = 0; i < bullets.size(); i++)
+		{
+			bullets[i]->move();
+		}
 
 		SDL_BlitSurface(background,&camera,screen,NULL);
 		showmap();
 		player1->show(screen);
+		for (int i = 0; i < bullets.size(); i++)
+		{
+			bullets[i]->show(screen);
+		}
 
 		SDL_Flip(screen);
 		if (1000/30 > (SDL_GetTicks()- start)) //regulating the 30 fps

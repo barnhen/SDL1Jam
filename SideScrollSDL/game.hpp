@@ -3,16 +3,18 @@
 #include <SDL1\SDL.h>
 #include "base.hpp"
 #include "player.hpp"
+#include "bullet.hpp"
 #include <iostream>
 #include <fstream> // to read map files
 #include <vector>
 
 
-class game
+class game:public baseclass
 {
-	SDL_Surface* screen, *background, *block;
+	SDL_Surface* screen, *background, *block, *bul;
 	SDL_Rect camera;
 	std::vector<std::vector<int> > map;
+	std::vector<bullet*> bullets;
 	bool direction[2]; // for x and y coordinates
 	SDL_Surface* load_image(const char* filename);
 	void loadmap(const char* filename);

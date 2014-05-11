@@ -21,6 +21,7 @@ player::player(SDL_Surface* img)
 	}
 	ground = false;
 	jump = false;
+	direction = 'r';
 }
 
 void player::setJump()
