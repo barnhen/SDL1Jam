@@ -15,6 +15,7 @@ class player:baseclass
 	char direction;
 	double frame;
 	bool moving;
+	int health;
 public:
 	player(SDL_Surface* img);
 	~player(void);
@@ -24,5 +25,10 @@ public:
 	void move(const std::vector<std::vector<int> >& map);
 	void show (SDL_Surface* screen);
 	void setJump();
+	void setMoving(bool b);
+	void setDirection(char c);
+	char getDirection();
+	int getHealth();
+	void setHealth(int h);
 };
 

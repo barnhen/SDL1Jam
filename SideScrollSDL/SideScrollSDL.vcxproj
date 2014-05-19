@@ -70,6 +70,7 @@
   <ItemGroup>
     <ClCompile Include="base.cpp" />
     <ClCompile Include="bullet.cpp" />
+    <ClCompile Include="enemy.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
@@ -78,6 +79,7 @@
   <ItemGroup>
     <ClInclude Include="base.hpp" />
     <ClInclude Include="bullet.hpp" />
+    <ClInclude Include="enemy.hpp" />
     <ClInclude Include="game.hpp" />
     <ClInclude Include="player.hpp" />
   </ItemGroup>

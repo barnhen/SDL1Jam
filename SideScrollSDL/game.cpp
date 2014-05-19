@@ -4,10 +4,12 @@ SDL_Rect baseclass::coord; //we have to actually reserve memory for the static S
 
 game::game()
 {
+	SDL_Init(SDL_INIT_EVERYTHING);
 	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
 	block = load_image("TileSet-1.bmp");
 	background=load_image("background.bmp");
 	bul = load_image("bullet.bmp");
+	ene = load_image("enemy.bmp");
 	baseclass::coord.x =  baseclass::coord.y = 0;
 	baseclass::coord.w = SCREEN_WIDTH;
 	baseclass::coord.h = SCREEN_HEIGHT;
@@ -17,6 +19,7 @@ game::game()
 	direction[0] = direction[1] = 0; // setting initial x, and y coord.
 	running = true;
 	player1 = new player(load_image("player.bmp"));
+	enemies.push_back(new enemy(ene, 100, 40, 1, 0));
 }
 
 
@@ -30,21 +33,25 @@ game::~game(void)
 	{
 		delete bullets[i];
 	}
+	for (int i = 0; i < enemies.size(); i++)
+	{
+		delete enemies[i];
+	}
 	SDL_Quit();
 }
 
 SDL_Surface* game::load_image(const char* filename)
 {
 	SDL_Surface* tmp = SDL_LoadBMP(filename);  //load the BMP to a tmp variable
-	if (tmp == nullptr || tmp == NULL)
-	{
-		std::cout<<"Couldn't load tmp image"<<std::endl;
-	}
+	//if (tmp == nullptr || tmp == NULL)
+	//{
+	//	std::cout<<"Couldn't load tmp image"<<std::endl;
+	//}
 	SDL_Surface* tmp2 = SDL_DisplayFormat(tmp); //change it to the format of the screen
-	if (tmp2 == nullptr || tmp2 == NULL)
-	{
-		std::cout<<"Couldn't load tmp image"<<std::endl;
-	}
+	//if (tmp2 == nullptr || tmp2 == NULL)
+	//{
+	//	std::cout<<"Couldn't load tmp image"<<std::endl;
+	//}
 	//SDL_SetColorKey(tmp2,SDL_SRCCOLORKEY,SDL_MapRGB(screen->format, 0x00,0xff,0xff));
 	SDL_FreeSurface(tmp);
 	return tmp2; 
@@ -65,9 +72,11 @@ void game::handleEvents()
 			{
 				case SDLK_LEFT:
 					direction[0]=1;
+					player1->setMoving(true);
 					break;
 				case SDLK_RIGHT:
 					direction[1]=1;
+					player1->setMoving(true);
 					break;
 				case SDLK_SPACE:
 					player1->setJump();
@@ -76,9 +85,18 @@ void game::handleEvents()
 					running = false;
 					return;
 				case SDLK_f:
-					bullets.push_back(new bullet(bul, 
-												 player1->getRect()->x + player1->getRect()->w, 
-												 player1->getRect()->y + 15, 5, 0));
+					if (player1->getDirection() == 'r')
+					{
+						bullets.push_back(new bullet(bul, 
+								player1->getRect()->x + player1->getRect()->w, 
+								player1->getRect()->y + 15, 5, 0));
+					}
+					else
+					{
+						bullets.push_back(new bullet(bul, 
+								player1->getRect()->x, 
+								player1->getRect()->y + 15, -5, 0));
+					}
 					break;
 
 			}
@@ -88,9 +106,11 @@ void game::handleEvents()
 			{
 				case SDLK_LEFT:
 					direction[0]=0;
+					player1->setMoving(false);
 					break;
 				case SDLK_RIGHT:
 					direction[1]=0;
+					player1->setMoving(false);
 					break;
 				case SDLK_ESCAPE:
 					running = false;
@@ -156,7 +176,7 @@ void game::showmap()
 
 	for (int i = 0; i < map.size(); i++)
 	{
-		for (int j = 0; j < map[0].size(); j++)
+		for (int j = 0; j < end; j++)
 		{
 			if (map[i][j] !=0)
 			{
@@ -190,6 +210,7 @@ void game::start()
 
 		if (direction[0])
 		{
+			player1->setDirection('l');
 			if(player1->getRect()->x > 0)
 			{
 				player1 -> setXvel(-1);
@@ -208,6 +229,7 @@ void game::start()
 
 		else if (direction[1])
 		{
+			player1->setDirection('r');
 			if (player1->getRect()->x < 80) // so the player cannot movrt far left on the border left
 			{
 				player1->setXvel(1);
@@ -231,7 +253,7 @@ void game::start()
 
 				//collision detection begin
 		int str = ( baseclass::coord.x - (baseclass::coord.x % baseclass::TILE_SIZE)) / baseclass::TILE_SIZE;
-		int end = (baseclass::coord.x + baseclass::coord.w + (baseclass::TILE_SIZE - (baseclass::coord.x + baseclass::coord.w) % baseclass::TILE_SIZE)) / 50;
+		int end = (baseclass::coord.x + baseclass::coord.w + (baseclass::TILE_SIZE - (baseclass::coord.x + baseclass::coord.w) % baseclass::TILE_SIZE)) / TILE_SIZE;
 	
 		if (start < 0)
 		{
@@ -241,12 +263,15 @@ void game::start()
 		{
 			end = map[0].size();
 		}
+		std::cout<<"map[0].size() is "<<map[0].size()<<std::endl;
+		std::cout<<"end is "<<end<<std::endl;
 		bool nc = false; // non collision
 
 		for (int i = 0; i < map.size(); i++)
 		{
-			for (int j = str; j < end; j++)
+			for (int j = str; j < map      .size(); j++)
 			{
+				//std::cout<<"j is "<<j<<std::endl;
 				if(map[i][j] == 0)
 					continue;
 				SDL_Rect destrect =  { j * 50 - baseclass::coord.x,i * 50, 50, 50 };
@@ -277,6 +302,49 @@ void game::start()
 			}
 		}
 
+		for (int i = 0; i < bullets.size(); i++)
+		{
+			for (int j = 0; j < enemies.size(); j++)
+			{
+				//relative coord to the screen
+				SDL_Rect tmprect = {enemies[j]->getRect()->x - baseclass::coord.x,
+					enemies[j]->getRect()->y, 50, 50};
+
+				// if we collide bullet to the enemy it disappear
+				if (collision(&tmprect, bullets[i]->getRect()))
+				{
+					delete enemies[j];
+					delete bullets[i];
+					enemies.erase(enemies.begin() + j);
+					bullets.erase(bullets.begin() + i);
+				}
+			}
+		}
+
+		//enemy colliding to the player
+		for (int j = 0; j < enemies.size(); j ++)
+		{
+			//relative coord to the screen
+			SDL_Rect tmprect = {enemies[j]->getRect()->x - baseclass::coord.x,
+				enemies[j]->getRect()->y, 50, 50};
+
+			// if we collide bullet to the enemy it disappear
+			if (collision(&tmprect, player1->getRect()))
+			{
+				// if the bottom of player is greater or equal than the top of the enemy and if the player foot is over the enemy head (10 pixel down the enemy head)
+				if (player1->getRect()->y + player1->getRect()->h >= enemies[j]->getRect()->y &&
+					player1->getRect()->y + player1->getRect()->h <= enemies[j]->getRect()->y + 10 )
+				{
+					delete enemies[j];
+					enemies.erase(enemies.begin()+j);
+				}
+				else
+				{
+					//colliding will decrese player's health
+					player1->setHealth(player1->getHealth() - 1);
+				}
+			}
+		}
 
 					
 
@@ -284,23 +352,44 @@ void game::start()
 		
 
 		player1->move(map);
+
 		for (int i = 0; i < bullets.size(); i++)
 		{
 			bullets[i]->move();
 		}
 
+		for (int i = 0; i < enemies.size(); i++)
+		{
+			enemies[i]->move(map);
+		}
+
+
 		SDL_BlitSurface(background,&camera,screen,NULL);
 		showmap();
 		player1->show(screen);
+
 		for (int i = 0; i < bullets.size(); i++)
 		{
 			bullets[i]->show(screen);
 		}
+		for (int i = 0; i < enemies.size(); i++)
+		{
+			enemies[i]->show(screen);
+		}
 
 		SDL_Flip(screen);
+
+		// if health is lower or euqal to zero or player has jumped into the cliff
+		if (player1->getHealth() <= 0 ||
+			player1->getRect()->y >= screen->h)
+		{
+			running = false;
+			std::cout<<"game over!" <<std::endl;
+		}
+
 		if (1000/30 > (SDL_GetTicks()- start)) //regulating the 30 fps
 		{
-			SDL_Delay(1000/30-(SDL_GetTicks()- start));
+			SDL_Delay(1000/30-(SDL_GetTicks() - start));
 		}
 	}
 }
