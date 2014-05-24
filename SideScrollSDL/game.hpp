@@ -7,18 +7,21 @@
 #include <iostream>
 #include <fstream> // to read map files
 #include <vector>
+#include <SDL1\SDL_ttf.h>
 #include "enemy.hpp"
 
 
 class game:public baseclass
 {
-	SDL_Surface* screen, *background, *block, *bul, *ene;
+	SDL_Surface* screen, *background, *block, *bul, *ene;	
 	SDL_Rect camera;
 	std::vector<std::vector<int> > map;
 	std::vector<bullet*> bullets;
 	std::vector<enemy*> enemies;
 
 	bool direction[2]; // for x and y coordinates
+	TTF_Font* font;  
+	SDL_Rect finish;
 	SDL_Surface* load_image(const char* filename);
 	void loadmap(const char* filename);
 	void showmap();
@@ -32,5 +35,7 @@ public:
 	game();
 	~game();
 	void start();
+	int showmenu(SDL_Surface* screen); //shows he menu
+	void showMessage(const char *c);
 };
 

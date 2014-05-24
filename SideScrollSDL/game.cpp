@@ -2,6 +2,97 @@
 
 SDL_Rect baseclass::coord; //we have to actually reserve memory for the static SDL_Rect from the baseclass
 
+int game::showmenu(SDL_Surface* screen) //shows he menu
+{
+    int x,y;
+    bool run=true;  //bool variable for the menu's for loop
+    const int NUMMENU=2;//we have 2 menu item
+    const char* array[NUMMENU] = {"Continue","Exit"}; //the label of these are these
+    SDL_Surface* menu[NUMMENU];//we need surface for them
+    bool selected[NUMMENU] = {0,0};//a boolean array for each menu item, true if it is selected
+    SDL_Color colors[2] = {{255,255,255},{255,0,0}};        //white and red color
+ 
+    for(int i=0;i<NUMMENU;i++)
+		menu[i]=TTF_RenderText_Solid(font,array[i],colors[0]); //make all of the white menus
+ 
+    SDL_Rect pos[NUMMENU];  //we store the position in here
+    for(int i=0;i<NUMMENU;i++)
+    {
+		pos[i].x=screen->clip_rect.w/2-menu[i]->clip_rect.w/2;  //put it approxemately to the center of the screen
+		pos[i].y=screen->clip_rect.h/2+i*(menu[i]->clip_rect.h);
+    }
+    SDL_Event menuevent;    //event
+ 
+    SDL_Surface* alpha=SDL_CreateRGBSurface(SDL_SWSURFACE|SDL_SRCALPHA,screen->w,screen->h,32,screen->format->Rmask,screen->format->Gmask,screen->format->Bmask,screen->format->Amask);     //create a new layer
+    SDL_FillRect(alpha,&screen->clip_rect,SDL_MapRGB(screen->format,0x00,0x00,0x00)); //which we fill with black
+    SDL_SetAlpha(alpha,SDL_SRCALPHA,129);   //and use it for alpha blending, because it's a cool effect
+    SDL_BlitSurface(alpha,NULL,screen,NULL);        //then show it
+    SDL_FreeSurface(alpha); //we don't need it anymore
+    while(run)
+    {
+		SDL_WaitEvent(&menuevent); //OK, I think, that's new, we'll wait until an event happened, if there is no event
+																											//the program will sleep in this function, so less CPU power is needed, we don't need
+																											//to regulate the FPS
+		switch(menuevent.type)
+		{
+			case SDL_QUIT:  //if we're exiting, than free the surfaces and exit
+				for(int i=0;i<NUMMENU;i++)
+						SDL_FreeSurface(menu[i]);
+				return 1;
+			case SDL_MOUSEMOTION:   //if the mouse is moved
+				x=menuevent.motion.x;   //then get the coordinates
+				y=menuevent.motion.y;
+				for(int i=0;i<NUMMENU;i++)      //we go throught all of the element
+				{       //and check if we are inside one of them
+					if(x>=pos[i].x && x <= (pos[i].x + menu[i]->clip_rect.w) && y>=pos[i].y && y <= (pos[i].y + menu[i]->clip_rect.h))
+					{
+						if(!selected[i]) //if so, then we check that is it already selected
+						{
+								SDL_FreeSurface(menu[i]);       //if not, then free the surface and make a red one
+								menu[i]=TTF_RenderText_Solid(font,array[i],colors[1]);
+								selected[i]=1; //and select the surface
+						}
+					}
+					else{  //if we're not selecting one
+						if(selected[i]) //we check, that is it selected
+						{
+								SDL_FreeSurface(menu[i]); //if so, then we delete and create a white one.
+								menu[i]=TTF_RenderText_Solid(font,array[i],colors[0]);
+								selected[i]=0;  //and unselect it
+						}
+					}
+				}
+				break;
+			case SDL_MOUSEBUTTONDOWN:       //if the mouse button was pressed
+				x=menuevent.button.x;   //get the coordinates
+				y=menuevent.button.y;
+				for(int i=0;i<NUMMENU;i++)      //do the same check
+				{
+					if(x>=pos[i].x && x <= (pos[i].x + menu[i]->clip_rect.w) && y>=pos[i].y && y <= (pos[i].y + menu[i]->clip_rect.h))
+					{
+						for(int j=0;j<NUMMENU;j++)      //if we clicked one menuitem, we free the menus and return the number
+							SDL_FreeSurface(menu[j]);       //of the clicked menu
+						return i;
+					}
+				}
+				break;
+			case SDL_KEYDOWN:       //if we press a key
+				if(menuevent.key.keysym.sym==SDLK_ESCAPE) //which escape
+				{
+					for(int i=0;i<NUMMENU;i++)
+							SDL_FreeSurface(menu[i]);
+					return 0;       //than return to the game
+				}
+				break;
+		}
+		for(int i=0;i<NUMMENU;i++)
+			SDL_BlitSurface(menu[i],NULL,screen,&pos[i]);   //show the menu
+		
+		SDL_Flip(screen);       //and actually show it in the screen
+    }
+	return 1;
+}
+
 game::game()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -10,6 +101,8 @@ game::game()
 	background=load_image("background.bmp");
 	bul = load_image("bullet.bmp");
 	ene = load_image("enemy.bmp");
+	TTF_Init();
+	font = TTF_OpenFont("arial.ttf", 20);
 	baseclass::coord.x =  baseclass::coord.y = 0;
 	baseclass::coord.w = SCREEN_WIDTH;
 	baseclass::coord.h = SCREEN_HEIGHT;
@@ -37,6 +130,8 @@ game::~game(void)
 	{
 		delete enemies[i];
 	}
+	TTF_CloseFont(font);
+	TTF_Quit();
 	SDL_Quit();
 }
 
@@ -81,7 +176,7 @@ void game::handleEvents()
 				case SDLK_SPACE:
 					player1->setJump();
 					break;
-				case SDLK_ESCAPE:
+				case SDLK_BACKSPACE:
 					running = false;
 					return;
 				case SDLK_f:
@@ -99,6 +194,13 @@ void game::handleEvents()
 					}
 					break;
 
+				case SDLK_ESCAPE:
+					int h = showmenu(screen);
+					if (h==1)
+					{
+						running = false;
+					}
+					break;
 			}
 			break;
 		case SDL_KEYUP:
@@ -112,7 +214,7 @@ void game::handleEvents()
 					direction[1]=0;
 					player1->setMoving(false);
 					break;
-				case SDLK_ESCAPE:
+				case SDLK_BACKSPACE:
 					running = false;
 					return;
 			}
@@ -295,7 +397,7 @@ void game::start()
 		for (int i = 0; i < bullets.size(); i++)
 		{
 			if (bullets[i]->getRect()->x >=  screen->w ||
-				bullets[i]->getRect()->x + bullets[i]->getRect()->w <= 0)
+				bullets[i]->getRect()->x <= 0)
 			{
 				delete bullets[i];
 				bullets.erase(bullets.begin() + i);
