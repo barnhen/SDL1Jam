@@ -36,6 +36,6 @@ public:
 	~game();
 	void start();
 	int showmenu(SDL_Surface* screen); //shows he menu
-	void showMessage(const char *c);
+	void showMessage(const char* c);
 };
 

@@ -2,6 +2,16 @@
 
 SDL_Rect baseclass::coord; //we have to actually reserve memory for the static SDL_Rect from the baseclass
 
+void game::showMessage(const char* c)
+{
+	SDL_Color color = {255,0,0};
+	SDL_Surface* text = TTF_RenderText_Solid(font, c, color);
+	SDL_Rect tmprect = {screen->w/2 - text->w/2, 20};
+	SDL_BlitSurface(text, NULL, screen, &tmprect);
+	SDL_FreeSurface(text);
+	SDL_Flip(screen);
+}
+
 int game::showmenu(SDL_Surface* screen) //shows he menu
 {
     int x,y;
@@ -112,7 +122,11 @@ game::game()
 	direction[0] = direction[1] = 0; // setting initial x, and y coord.
 	running = true;
 	player1 = new player(load_image("player.bmp"));
-	enemies.push_back(new enemy(ene, 100, 40, 1, 0));
+	//enemies.push_back(new enemy(ene, 100, 40, 1, 0));
+	finish.x = 0;
+	finish.y = 0;
+	finish.w = 50;
+	finish.h = 50;
 }
 
 
@@ -122,6 +136,7 @@ game::~game(void)
 	SDL_FreeSurface(block);
 	SDL_FreeSurface(background);
 	SDL_FreeSurface(bul);
+	delete player1 ;
 	for (int i = 0; i < bullets.size(); i++)
 	{
 		delete bullets[i];
@@ -247,18 +262,32 @@ void game::loadmap(const char* filename)
 			}
 			
 			in >> current;
-			if (current>=0 && current <=1)
+			if (current == -1)
 			{
-				vec.push_back(current);
+				enemies.push_back(new enemy(ene, j* 50, i * 50, 1, 0));
+				vec.push_back(0);
 			}
 			else
 			{
-				vec.push_back(0);
+				if (current>=0 && current <=7)
+				{
+					if (current == 3)
+					{
+						finish.x = j * 50;
+						finish.y = i * 50;
+					}
+					vec.push_back(current);
+				}			
+				else
+				{
+					vec.push_back(0);
+				}
 			}
 		}
 		map.push_back(vec);
 	}
 	in.close();
+	std::cout<< finish.x << " " << finish.y << std::endl;
 }
 
 
@@ -486,7 +515,17 @@ void game::start()
 			player1->getRect()->y >= screen->h)
 		{
 			running = false;
-			std::cout<<"game over!" <<std::endl;
+			//std::cout<<"game over!" <<std::endl;
+			showMessage("game over");
+			SDL_Delay(1000);
+		}
+
+		SDL_Rect tmprect = {finish.x - coord.x, finish.y, 50, 50};
+		if (collision(player1->getRect(), &tmprect))
+		{
+			running = false;
+			showMessage("You Win");
+			SDL_Delay(1000);
 		}
 
 		if (1000/30 > (SDL_GetTicks()- start)) //regulating the 30 fps
