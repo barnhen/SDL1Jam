@@ -78,7 +78,8 @@ int game::showmenu(SDL_Surface* screen) //shows he menu
 				y=menuevent.button.y;
 				for(int i=0;i<NUMMENU;i++)      //do the same check
 				{
-					if(x>=pos[i].x && x <= (pos[i].x + menu[i]->clip_rect.w) && y>=pos[i].y && y <= (pos[i].y + menu[i]->clip_rect.h))
+					if(x>=pos[i].x && x <= (pos[i].x + menu[i]->clip_rect.w) && 
+					   y>=pos[i].y && y <= (pos[i].y + menu[i]->clip_rect.h))
 					{
 						for(int j=0;j<NUMMENU;j++)      //if we clicked one menuitem, we free the menus and return the number
 							SDL_FreeSurface(menu[j]);       //of the clicked menu
@@ -122,6 +123,7 @@ game::game()
 	direction[0] = direction[1] = 0; // setting initial x, and y coord.
 	running = true;
 	player1 = new player(load_image("player.bmp"));
+	bound = false;
 	//enemies.push_back(new enemy(ene, 100, 40, 1, 0));
 	finish.x = 0;
 	finish.y = 0;
@@ -208,7 +210,9 @@ void game::handleEvents()
 								player1->getRect()->y + 15, -5, 0));
 					}
 					break;
-
+				case SDLK_c:
+					bound = true;
+					break;
 				case SDLK_ESCAPE:
 					int h = showmenu(screen);
 					if (h==1)
@@ -232,6 +236,9 @@ void game::handleEvents()
 				case SDLK_BACKSPACE:
 					running = false;
 					return;
+				case SDLK_c:
+					bound = false;
+					break;
 			}
 			break;
 		}
@@ -317,7 +324,7 @@ void game::showmap()
 										(map[i][j]-1) * baseclass::TILE_SIZE,0,baseclass::TILE_SIZE,baseclass::TILE_SIZE
 									 };
 
-				//destrect = destination rectangleand in the screen (so for example if the camera at 100px position and the tile is at 120px position, we show the tile at 20px position
+				//destrect = destination rectangle and in the screen (so for example if the camera at 100px position and the tile is at 120px position, we show the tile at 20px position
 				SDL_Rect destrect = {
 										j * baseclass::TILE_SIZE-baseclass::coord.x, i*50
 									};
@@ -452,6 +459,9 @@ void game::start()
 			}
 		}
 
+
+
+
 		//enemy colliding to the player
 		for (int j = 0; j < enemies.size(); j ++)
 		{
@@ -506,6 +516,14 @@ void game::start()
 		for (int i = 0; i < enemies.size(); i++)
 		{
 			enemies[i]->show(screen);
+		}
+
+		//drawing collision
+		if (bound)
+		{
+			//player1->FillRect(screen, player1->getRect()->x, player1->getRect()->y, player1->getRect()->w, player1->getRect()->h, 0xFFFFFF);
+			player1->FillRect(screen, player1->getRect()->x, player1->getRect()->y, 100, 100, 0xFF66CC);
+
 		}
 
 		SDL_Flip(screen);

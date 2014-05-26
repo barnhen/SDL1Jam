@@ -30,5 +30,7 @@ public:
 	char getDirection();
 	int getHealth();
 	void setHealth(int h);
+
+	void FillRect(SDL_Surface* screen, int x, int y, int w, int h, int color);
 };
 

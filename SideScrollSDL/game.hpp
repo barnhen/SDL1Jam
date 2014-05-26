@@ -30,6 +30,7 @@ class game:public baseclass
 	static const int SCREEN_WIDTH = 640;
 	static const int SCREEN_HEIGHT = 480;
 	player* player1;
+	bool bound;
 
 public:
 	game();

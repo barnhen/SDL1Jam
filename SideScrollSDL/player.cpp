@@ -184,3 +184,8 @@ void player::move(const std::vector<std::vector<int> >& map)
 	}
 	
 }
+
+void player::FillRect(SDL_Surface* screen, int x, int y, int w, int h, int color) {
+	SDL_Rect rect = {x,y,w,h};
+	SDL_FillRect(screen, &rect, color);
+}
